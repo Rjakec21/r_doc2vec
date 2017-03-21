@@ -4,6 +4,10 @@
 
 library(hash)
 
+DefaultTrimRule <- function() {
+  # Do something
+}
+
 Word2Vec <- setClass(
   "Word2Vec",
   
@@ -90,7 +94,3 @@ Word2Vec <- setClass(
     # Do something
   }
 )
-
-DefaultTrimRule <- function() {
-  # Do something
-}

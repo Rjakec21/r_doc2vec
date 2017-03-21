@@ -46,7 +46,9 @@ Doc2Vec <- setClass(
     trim_rule=DefaultTrimRule
   ),
   
-  validity = function() {
+  validity = function(object) {
     # Do something
-  }
+  },
+  
+  contains = "Word2Vec"
 )
