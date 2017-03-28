@@ -1,64 +1,13 @@
 # word2vec.R
-# Currently in as basic a state as can be achieved based on the
-# Gensim word2vec model
+# Was goind to add Sentences, but this is unnecessary.
+# Role is taken by Documents type in parser.R
+# Fixed some variables and made validity function
 
 library(hash)
 
-# Constants defined here
-kNoRead <- "no read"
-kReadList <- c("table", "csv", "csv2", "delim", "delim2", kNoRead)
-
-DefaultTrimRule <- function() {
-  # Do something
+DefaultTrimRule <- function(document, min_count) {
+  
 }
-
-Sentence <- setClass(
-  "Sentence",
-  
-  slots=c(
-    readType="character",
-    file="character",
-    words="vector"
-  ),
-  
-  prototype=list(
-    readType=NULL,
-    file=NULL,
-    words=NULL
-  ),
-  
-  # This function returns TRUE when all variables
-  # have been set correctly
-  validity = function(object) {
-    # Checks whether readType is valid first
-    if (object@readType != "") {
-      # Checks to see if readType is in the constant kReadList
-      for (rType in kReadList) {
-        # Reached the end of the vector, so not a valid read type
-        if (identical(rType, kNoRead)) {
-          return(paste("not a valid read type. Use: \"table\",",
-                       "\"csv\", \"csv2\", \"delim\", or",
-                       "\"delim2\". When using words var only, set",
-                       "readType=\"\"",
-                       sep=" "))
-        }
-        # Is a valid read type, first case where TRUE can be returned
-        else if (identical(rType, object@readType)) {
-          return(TRUE)
-        }
-      }
-    }
-    # Check that words is a vector of character types,
-    # can have 0 length
-    else if (is.character(object@words)) {
-      return(TRUE)
-    }
-    # None of the required variables are set correctly
-    else {
-      return("must set either readtype (and file) or words")
-    }
-  }
-)
 
 Word2Vec <- setClass(
   "Word2Vec",
@@ -72,7 +21,8 @@ Word2Vec <- setClass(
     alpha="numeric",
     # Distance between words used in each prediction
     window="numeric",
-    # Lowest frequency for a word to be counted
+    # Lowest frequency for a word to be counted with 
+    # default trim rule
     min_count="numeric",
     # Size of vocab of words. If reached, infrequent words 
     # are deleted
@@ -85,17 +35,19 @@ Word2Vec <- setClass(
     workers="numeric",
     # End value of alpha to be reached
     min_alpha="numeric",
-    # The training algorithm. 0 for CBOW, 1 for skip-gram
-    sg="numeric",
-    # For model training. 0 for negative sampling, 
-    # 1 for heirarchical softmax
-    hs="numeric",
+    # The training algorithm. TRUE for skip-gram, FALSE
+    # for CBOW (default)
+    sg="logical",
+    # For model training. TRUE for heirarchical softmax, 
+    # FALSE for negative sampling (default)
+    hs="logical",
     # If > 0, negative sampling will be used and value is number of 
     # 'noise words' (usually between 5 and 20). If 0, no negative 
     # sampling will be used. 
     negative="numeric",
-    # If 0, use sum of context word vectors. If 1, use mean.
-    cbow_mean="numeric",
+    # If TRUE, use mean of context word vectors (default). 
+    # If FALSE, use sum.
+    cbow_mean="logical",
     # Hash function to randomly initialize weights
     hashfxn="function",
     # Number of iterations over the corpus
@@ -104,9 +56,9 @@ Word2Vec <- setClass(
     # A trimming rule for words, specifying whether words 
     # should remain in the vocabulary or be trimmed away
     trim_rule="function",
-    # If 1, sort by descending frequency before assigning word 
+    # If TRUE, sort by descending frequency before assigning word 
     # indexes
-    sorted_vocab="numeric",
+    sorted_vocab="logical",
     # Target number of words to be sent to each worker thread
     batch_words="numeric"
   ),
@@ -125,12 +77,12 @@ Word2Vec <- setClass(
     workers=3,
     min_alpha=0.0001,
     # CBOW on default
-    sg=0,
+    sg=FALSE,
     # Negative Sampling on default
-    hs=0,
+    hs=FALSE,
     negative=5,
     # Uses mean on default
-    cbow_mean=1,
+    cbow_mean=TRUE,
     # Built-in R hash function
     hashfxn=hash,
     iter=5,
@@ -138,11 +90,25 @@ Word2Vec <- setClass(
     # Default trim rule, defined above
     trim_rule=DefaultTrimRule,
     # Sorts on default
-    sorted_vocab=1,
+    sorted_vocab=TRUE,
     batch_words=10000
   ),
   
   validity = function(object) {
-    # Do something
+    if (object@min_alpha > object@alpha) {
+      return(paste("min_alpha > alpha, which is incorrect,",
+                   "alpha will drop to min_alpha during training",
+                   sep=" "))
+    }
+    else if (object@iter <= 0) {
+      return("iter <= 0. iter must be positive, so the corpus",
+             "is read at least once.",
+             sep=" ")
+    }
+    else if (object@batch_words <= 0) {
+      return("batch_words <= 0. batch_words must be positive,",
+             "so some words are sent to each worker thread.",
+             sep=" ")
+    }
   }
 )

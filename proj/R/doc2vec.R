@@ -1,6 +1,20 @@
 # doc2vec.R
-# Currently in as basic a state as can be achieved based on the
-# Gensim doc2vec model
+# Added TaggedDocuments and corrected some variables
+# Added validity method
+
+TaggedDocument <- setClass(
+  "TaggedDocument",
+  
+  slots=c(
+    tags="character"
+  ),
+  
+  prototype=list(
+    tags=c("")
+  ),
+  
+  contains="Document"
+)
 
 Doc2Vec <- setClass(
   "Doc2Vec",
@@ -8,16 +22,17 @@ Doc2Vec <- setClass(
   slots=c(
     # List of documents which will be used for training
     documents="list",
-    # If 0, use sum of context word vectors. If 1, use mean.
-    dm_mean="numeric",
-    # The training algorithm. 0 for DBOW, 1 for DM
-    dm="numeric",
-    # If 0 train doc vectors only (faster), if 1 trains vectors
-    # simultaneously with DBOW
-    dbow_words="numeric",
-    # If 0, do nothing. If 1, concatenate context vectors rather 
-    # than use mean
-    dm_concat="numeric",
+    # If TRUE, use mean of context word vectors.
+    # If FALSE, use sum (default)
+    dm_mean="logical",
+    # The training algorithm. TRUE for DM (default), FALSE for DBOW
+    dm="logical",
+    # If TRUE, trains vectors simultaneously with DBOW. 
+    # If FALSE train doc vectors only (faster)
+    dbow_words="logical",
+    # If TRUE, concatenate context vectors rather than use mean.
+    # If FALSE, train doc vectors only (faster)
+    dm_concat="logical",
     # Expected number of tags per document when dm_concat is active
     dm_tag_count="numeric",
     docvecs="list",
@@ -30,13 +45,13 @@ Doc2Vec <- setClass(
     # Model is left uninitialized
     documents=NULL,
     # Use sum by default
-    dm_mean=0,
+    dm_mean=FALSE,
     # Use DM by default
-    dm=1,
-    # Train doc vectors only
-    dbow_words=0,
+    dm=TRUE,
+    # Train doc vectors only by default
+    dbow_words=FALSE,
     # No concatenation by default
-    dm_concat=0,
+    dm_concat=FALSE,
     # 1 as a default, though only active when dm_concat is
     dm_tag_count=1,
     docvecs=NULL,
@@ -47,7 +62,11 @@ Doc2Vec <- setClass(
   ),
   
   validity = function(object) {
-    # Do something
+    if (object@dm_tag_count <= 0) {
+      return(paste("dm_tag_count <= 0. dm_tag_count must be",
+             "positive for dm to find tags in documents",
+             sep=" "))
+    }
   },
   
   contains = "Word2Vec"
