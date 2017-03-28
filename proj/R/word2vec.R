@@ -4,9 +4,61 @@
 
 library(hash)
 
+# Constants defined here
+kNoRead <- "no read"
+kReadList <- c("table", "csv", "csv2", "delim", "delim2", kNoRead)
+
 DefaultTrimRule <- function() {
   # Do something
 }
+
+Sentence <- setClass(
+  "Sentence",
+  
+  slots=c(
+    readType="character",
+    file="character",
+    words="vector"
+  ),
+  
+  prototype=list(
+    readType=NULL,
+    file=NULL,
+    words=NULL
+  ),
+  
+  # This function returns TRUE when all variables
+  # have been set correctly
+  validity = function(object) {
+    # Checks whether readType is valid first
+    if (object@readType != "") {
+      # Checks to see if readType is in the constant kReadList
+      for (rType in kReadList) {
+        # Reached the end of the vector, so not a valid read type
+        if (identical(rType, kNoRead)) {
+          return(paste("not a valid read type. Use: \"table\",",
+                       "\"csv\", \"csv2\", \"delim\", or",
+                       "\"delim2\". When using words var only, set",
+                       "readType=\"\"",
+                       sep=" "))
+        }
+        # Is a valid read type, first case where TRUE can be returned
+        else if (identical(rType, object@readType)) {
+          return(TRUE)
+        }
+      }
+    }
+    # Check that words is a vector of character types,
+    # can have 0 length
+    else if (is.character(object@words)) {
+      return(TRUE)
+    }
+    # None of the required variables are set correctly
+    else {
+      return("must set either readtype (and file) or words")
+    }
+  }
+)
 
 Word2Vec <- setClass(
   "Word2Vec",
