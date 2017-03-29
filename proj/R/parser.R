@@ -18,7 +18,7 @@ document <- setClass(
 )
 
 #  Parse all of the files in a directory (Recurses down through subdirectories)
-parse <- function(path, sort){
+parse <- function(path, sort = FALSE){
   setwd(path)
   dir <- list.files(recursive = TRUE);
   
@@ -38,14 +38,14 @@ parse <- function(path, sort){
 	  }
 	
 	  # Store the number of times each word is used in a text.
-    freq.data <- data.frame(word = c(""), occurrence = c(0))
+    freq.data <- data.frame(word = c(), occurrence = c())
 
     # count frequency
     for (word in words){
-      if (word %in% freq.data[,1]){ 
+      if (word %in% freq.data$word){ 
         # If a word is already in the list of found words.
-        pos <- match(word, freq.data[,1])
-        freq.data[,2][pos] <- freq.data[,2][pos] + 1
+        pos <- match(word, freq.data$word)
+        freq.data$occurrence[[pos]] <- freq.data$occurrence[[pos]] + 1
       } 
       else { 
         # If a word is not in the list of found words.
@@ -55,13 +55,36 @@ parse <- function(path, sort){
     }
     
     #  Sort the words by frequency
-    doc_words=freq.data
+    doc_words <- freq.data
     if (sort) { #only sort if asked to do so
-      doc_words=freq.data[order(-freq.data[,2]),]
+      doc_words <- freq.data[order(-freq.data$occurrence),]
     }
     doc_temp <- document(name=file, words=doc_words)
     doc_list <- c(doc_list, doc_temp)
   }
   
   return(doc_list)
+}
+
+build_vocab <- function(doc_list, sort = FALSE){
+	vocab <- data.frame(word = c(), freq = c())
+	
+	for (doc in doc_list){
+		frequency_table = data.frame(doc@words)
+		for (x in c(1:length(doc@words$word))){
+			if (doc@words$word[[x]] %in% vocab$word){
+				pos <- match(doc@words$word[[x]], vocab$word)
+				vocab$freq[[pos]] <- vocab$freq[[pos]] + doc@words$occurrence[[x]]
+			} else {
+				vocab <- rbind(vocab, data.frame(word = doc@words$word[[x]], 
+					freq = doc@words$occurrence[[x]]))
+			}
+		}
+	}
+	
+	if (sort) { # only sort if asked to do so
+      vocab <- vocab[order(-vocab$freq),]
+    }
+    
+	return(vocab)
 }
