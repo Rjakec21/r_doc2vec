@@ -26,7 +26,7 @@ parse <- function(path, sort = FALSE){
   doc_list <- c()
 
   for (file in dir){
-    doc <- read.delim(file, header = FALSE, sep = " ")
+    doc <- read.delim(file, header = FALSE, sep = " ", quote = "")
     #Flatten the table of words that gets read in.
     words <- c(t(doc))
     
@@ -36,6 +36,8 @@ parse <- function(path, sort = FALSE){
 		  words[index] <- tolower(gsub("[[:punct:]]", "", words[index]))
 		  index <- index + 1
 	  }
+	  
+	  words <- words[!(words == "")]
 	
 	  # Store the number of times each word is used in a text.
     freq.data <- data.frame(word = c(), occurrence = c())
@@ -59,7 +61,7 @@ parse <- function(path, sort = FALSE){
     if (sort) { #only sort if asked to do so
       doc_words <- freq.data[order(-freq.data$occurrence),]
     }
-    doc_temp <- document(name=file, words=doc_words)
+    doc_temp <- document(name=paste(path, file, sep = "/"), words=doc_words)
     doc_list <- c(doc_list, doc_temp)
   }
   
