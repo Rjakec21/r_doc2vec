@@ -18,7 +18,7 @@ document <- setClass(
 )
 
 #  Parse all of the files in a directory (Recurses down through subdirectories)
-parse <- function(path, sort = FALSE){
+parse <- function(path, sort = FALSE, stop_list = c(), min_freq = -1){
   setwd(path)
   dir <- list.files(recursive = TRUE);
   
@@ -29,6 +29,7 @@ parse <- function(path, sort = FALSE){
     doc <- read.delim(file, header = FALSE, sep = " ", quote = "")
     #Flatten the table of words that gets read in.
     words <- c(t(doc))
+    words <- words[!is.na(words)]
     
     # Remove all punctuation and lower case all words.
     index <- 1;
@@ -38,6 +39,10 @@ parse <- function(path, sort = FALSE){
 	  }
 	  
 	  words <- words[!(words == "")]
+	  
+	  if (length(stop_list) > 0) {
+	  	words <- words[!(words %in% stop_list)]
+	  }
 	
 	  # Store the number of times each word is used in a text.
     freq.data <- data.frame(word = c(), occurrence = c())
@@ -60,6 +65,10 @@ parse <- function(path, sort = FALSE){
     doc_words <- freq.data
     if (sort) { #only sort if asked to do so
       doc_words <- freq.data[order(-freq.data$occurrence),]
+    }
+    
+    if (min_freq > 0){
+    	doc_words <- freq.data[!(freq.data$occurrence < min_freq),]
     }
     doc_temp <- document(name=paste(path, file, sep = "/"), words=doc_words)
     doc_list <- c(doc_list, doc_temp)

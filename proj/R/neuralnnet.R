@@ -26,8 +26,8 @@ sample_context <- function(context){
 }
 
 # Grab a window of text from a document of size 2 * context_size + 1
-grab_context <- function(file_path, pos, context_size){
-  words <- get_document(file_path)
+grab_context <- function(file_path, pos, context_size, vocab){
+  words <- get_document(file_path, vocab)
   
   start_pos <- pos - context_size
   end_pos <- pos + context_size
@@ -40,8 +40,8 @@ grab_context <- function(file_path, pos, context_size){
   return(words[start_pos:end_pos])
 }
 
-get_document <- function(file_path){ # Read the document
-	doc <- read.delim(file_path, header = FALSE, sep = " ", quote = "")
+get_document <- function(file_path, vocab){ # Read the document
+  doc <- read.delim(file_path, header = FALSE, sep = " ", quote = "")
   #Flatten the table of words that gets read in.
   words <- c(t(doc))
   words <- words[!is.na(words)]  
@@ -54,6 +54,7 @@ get_document <- function(file_path){ # Read the document
   }
   
   words <- words[!(words == "")]
+  words <- words[(words %in% vocab$word)]
   
   return(words)
 }
@@ -64,12 +65,12 @@ get_document <- function(file_path){ # Read the document
 # vector_size is the size of the document vectors
 # vocab is the vocabulary
 calc_vector <- function(file, window_size, vector_size=10, vocab) {
-	size <- length(get_document(file))
+	size <- length(get_document(file, vocab))
 	vocab_size <- length(vocab$word)
 	output <- c()
 	input <- c()
 	for (i in c(1:size)){
-		context <- grab_context(file, i, window_size)
+		context <- grab_context(file, i, window_size, vocab)
 		sample <- sample_context(context)
 		example <- vectorize(sample, vocab)
 		output <- c(output, example)

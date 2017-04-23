@@ -2,8 +2,13 @@ source("parser.R") # Grab the parser functions
 source("neuralnnet.R") # Grab the neural network functions
 
 path <- "/PATH/TO/DOCUMENTS" # Change this to the directory of your documents.
+stop <- c("a", "an", "and", "are", "as", 
+		  "at", "be", "by", "for", "from", 
+		  "has", "he", "in", "is", "it", 
+		  "its", "of", "on", "that", "the", 
+		  "to", "was", "were", "will", "with")
 
-list <- parse(path) # Parse documents from a path
+list <- parse(path, stop_list = stop, min_freq = 2) # Parse documents from a path
 vocab <- build_vocab(list) # Combine the vocabularies of each document into one
 
 print("Finished Building Vocabulary")
